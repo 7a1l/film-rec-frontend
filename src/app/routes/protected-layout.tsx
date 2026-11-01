@@ -1,8 +1,10 @@
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 
 export function ProtectedLayout() {
     return(
-        <SidebarProvider>
+        <SidebarProvider> 
+            
             <SidebarInset>
                 <header className="flex h-12 items-center px-4">
                     <SidebarTrigger/>    
@@ -11,6 +13,8 @@ export function ProtectedLayout() {
                         <Outlet/>
                 </div>
             </SidebarInset>
+            
         </SidebarProvider>
+
     )
 }

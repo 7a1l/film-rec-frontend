@@ -3,6 +3,8 @@ import { RootLayout } from "./routes/root-layout";
 import { RootRedirect } from "./routes/root-redirect";
 import { GuestRoute } from "./routes/guest-route";
 import { ProtectedRoute } from "./routes/protected-route";
+import { AuthRegisterPage } from "@/pages/auth/register/page";
+import { AuthLoginPage } from "@/pages/auth/login/page";
 
 export const appRouter = createBrowserRouter([{
     path: '/',
@@ -18,12 +20,21 @@ export const appRouter = createBrowserRouter([{
             children: [
                 {
                     path: "login",
-                    element: <h1>Login</h1>
+                    element: <AuthLoginPage/>
+                },
+                {
+                    path: "reset-password",
+                    element: <h1>reset password</h1>
                 },
                 {
                     path: "register",
-                    element: <h1>Register</h1>
+                    element: <AuthRegisterPage/>
+                },
+                {
+                    path: "films",
+                    element: <h1>Films</h1>
                 }
+
             ]
         },
         {
@@ -37,6 +48,18 @@ export const appRouter = createBrowserRouter([{
                     path: "rating",
                     element: <h1>rating</h1>
                 },
+                {
+                    path: "user/me",
+                    element: <h1>rating</h1>
+                },
+                {
+                    path: "user/:id/edit",
+                    element: <h1>rating</h1>
+                },
+                {
+                    path: "user/:id/change-password",
+                    element: <h1>rating</h1>
+                }
             ]
         },
         {
