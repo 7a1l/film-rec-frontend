@@ -43,6 +43,7 @@ export function RegisterForm({}) {
 
         try {
             await register({email, password, name})
+            navigate('/login', {replace: true})
         } catch {
              
         }

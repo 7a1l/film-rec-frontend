@@ -3,7 +3,6 @@ export type ApiFieldError = {
     message: string
 }
 
-
 export type ApiErrorResponse = {
     
     message: string
@@ -35,3 +34,19 @@ export type AuthRegisterRequest = {
     name: string
 }
 
+export type PasswordRecoveryRequest = {
+    email: string
+}
+
+export type PasswordRecoveryResponse = {
+    response: string
+}
+
+export type NewPasswordRequest = {
+    password: string
+    token: string
+}
+
+export type ValidateTokenRequest = {
+    token: string
+}

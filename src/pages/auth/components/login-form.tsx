@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { type SubmitEvent } from "react";
 
-
 export function LoginForm () {
     const navigate = useNavigate();
     const login = useAuthStore(s => s.login);
@@ -35,18 +34,32 @@ export function LoginForm () {
                 <form onSubmit={handleSubmit}>
                      <FieldGroup>
                         <AuthFormErrorAlert message={ authError }></AuthFormErrorAlert>
+                        
                         <Field>
                             <FieldLabel htmlFor="login-email">
                                 Email                                
                             </FieldLabel>
                             <Input id="login-email" name="email" type="email" placeholder="example@example.com" autoComplete="email" required disabled={isAuthLoading}></Input>
                         </Field>
+                        
                         <Field>
-                            <FieldLabel htmlFor="login-password">
-                                Password                                
-                            </FieldLabel>
+                            <div className="flex justify-between items-center w-full mb-1">
+                                <FieldLabel htmlFor="login-password" className="mb-0">
+                                    Password                                
+                                </FieldLabel>
+                                <Link 
+                                    to="/recovery"
+                                    className="text-xs text-brand-orange hover:text-brand-orange-hover hover:underline font-medium transition-colors"
+                                    onClick={() => {
+                                        useAuthStore.getState().clearAuthError();
+                                    }}
+                                >
+                                    Забыли пароль?
+                                </Link>
+                            </div>
                             <Input id="login-password" name="password" type="password" autoComplete="current-password" required disabled={isAuthLoading}></Input>
                         </Field>
+                        
                         <Field>
                             <Button type="submit" className="w-full" disabled={isAuthLoading}>
                                 { isAuthLoading ? 'Вход...' : 'Войти'}

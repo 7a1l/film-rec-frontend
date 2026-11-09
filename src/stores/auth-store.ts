@@ -1,5 +1,5 @@
 import {create} from 'zustand'
-import type { AuthLoginRequest, AuthRegisterRequest, UserPublic } from '../shared/api/types'
+import type { AuthLoginRequest, AuthRegisterRequest, NewPasswordRequest, PasswordRecoveryRequest, UserPublic, ValidateTokenRequest } from '../shared/api/types'
 import { getAuthToken, setAuthToken } from '../shared/api/auth-token'
 import { authApi } from '../shared/api/auth-api'
 import { getApiErrorMessage } from '../lib/utils'
@@ -16,6 +16,9 @@ type AuthState = {
     logout: () => void
     clearAuthError: () => void
     featchMe: () => Promise<void>
+    sendRecoveryEmail: (email: PasswordRecoveryRequest) => Promise<void> 
+    updatePassword: (password: NewPasswordRequest) => Promise<void>
+    validateResetToken: (token: ValidateTokenRequest) => Promise<void>
 }
 
 function profileToUser(profile: { id: string, email: string }): UserPublic {
@@ -113,6 +116,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         {
             setAuthToken(null);
             set({user: null})
+        }
+    },
+    sendRecoveryEmail: async (email) => {
+        set({ isAuthLoading: true, AuthError: null })
+        try {
+            await authApi.sendRecoveryEmail(email); 
+            set({ isAuthLoading: false })
+        } catch (error) {
+            set({
+                isAuthLoading: false,
+                AuthError: getApiErrorMessage(error, 'Не удалось отправить ссылку для восстановления')
+            })
+            throw error
+        }
+    },
+    updatePassword: async (password) => {
+        set({ isAuthLoading: true, AuthError: null })
+        try {
+            await authApi.updatePassword(password);
+            set({ isAuthLoading: false })
+        } catch (error) {
+            set({
+                isAuthLoading: false,
+                AuthError: getApiErrorMessage(error, 'Не удалось обновить пароль')
+            })
+            throw error
+        }
+    },
+    validateResetToken: async (token) => {
+        set({ isAuthLoading: true, AuthError: null });
+        try {
+            await authApi.validateResetToken(token);
+            set({ isAuthLoading: false });
+        } catch (error) {
+            set({
+                isAuthLoading: false,
+                AuthError: 'Ссылка для восстановления пароля устарела или недействительна'
+            });
+            throw error;
         }
     }
 }))

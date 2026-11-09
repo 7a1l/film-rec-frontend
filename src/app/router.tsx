@@ -5,6 +5,10 @@ import { GuestRoute } from "./routes/guest-route";
 import { ProtectedRoute } from "./routes/protected-route";
 import { AuthRegisterPage } from "@/pages/auth/register/page";
 import { AuthLoginPage } from "@/pages/auth/login/page";
+import { PasswordrecoveryPage } from "@/pages/auth/recovery/page";
+import { NewPasswordPage } from "@/pages/auth/new-password/page";
+import { RecoveryLinkGuard } from "./routes/recovery-link-guard";
+import { ProtectedLayout } from "./routes/protected-layout";
 
 export const appRouter = createBrowserRouter([{
     path: '/',
@@ -18,47 +22,28 @@ export const appRouter = createBrowserRouter([{
         {
             element: <GuestRoute/>,
             children: [
-                {
-                    path: "login",
-                    element: <AuthLoginPage/>
-                },
-                {
-                    path: "reset-password",
-                    element: <h1>reset password</h1>
-                },
-                {
-                    path: "register",
-                    element: <AuthRegisterPage/>
-                },
-                {
-                    path: "films",
-                    element: <h1>Films</h1>
-                }
-
+                { path: "login", element: <AuthLoginPage/> },
+                { path: "recovery", element: <PasswordrecoveryPage/> },
+                { path: "register", element: <AuthRegisterPage/> }
             ]
         },
+
         {
-            element: <ProtectedRoute/>,
+            element: <RecoveryLinkGuard />,
+            children: [
+                  { path: "reset-password", element: <NewPasswordPage /> }
+                ]
+        },
+        {
+            element: <ProtectedRoute />,
             children: [
                 {
-                    path: "recomendations",
-                    element: <h1>recomendations</h1>
-                },
-                {
-                    path: "rating",
-                    element: <h1>rating</h1>
-                },
-                {
-                    path: "user/me",
-                    element: <h1>rating</h1>
-                },
-                {
-                    path: "user/:id/edit",
-                    element: <h1>rating</h1>
-                },
-                {
-                    path: "user/:id/change-password",
-                    element: <h1>rating</h1>
+                    element: <ProtectedLayout />, 
+                    children: [
+                        { path: "films", element: <h1>Films</h1> },
+                        { path: "recomendations", element: <h1>Recomendations</h1> },
+                        { path: "user/me", element: <h1>ПРОФИЛЬ</h1> }
+                    ]
                 }
             ]
         },
