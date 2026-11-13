@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createHashRouter, Navigate } from "react-router-dom";
 import { RootLayout } from "./routes/root-layout";
 import { RootRedirect } from "./routes/root-redirect";
 import { GuestRoute } from "./routes/guest-route";
@@ -15,7 +15,7 @@ import { FilmsPage } from "@/pages/films/page";
 import { OnboardingPage } from "@/pages/onboarding/page";
 import { RecommendationsPage } from "@/pages/recommendations/page";
 
-export const appRouter = createBrowserRouter([{
+export const appRouter = createHashRouter([{
     path: '/',
     element: <RootLayout />,
     children:
