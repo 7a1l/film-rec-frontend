@@ -26,6 +26,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_API_URL: https://film-rec-backend-7a1l.msk1.amvera.tech
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
