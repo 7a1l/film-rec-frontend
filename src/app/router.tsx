@@ -12,6 +12,7 @@ import { ProtectedLayout } from "./routes/protected-layout";
 import { ConfirmEmailPage } from "@/pages/auth/confirm-email-change/page";
 import { ProfilePage } from "@/pages/profile/page";
 import { FilmsPage } from "@/pages/films/page";
+import { OnboardingPage } from "@/pages/onboarding/page";
 
 export const appRouter = createBrowserRouter([{
     path: '/',
@@ -42,7 +43,7 @@ export const appRouter = createBrowserRouter([{
             element: <ProtectedRoute />,
             children: [
                 { path: "user/me", element: <ProfilePage /> },
-                
+                { path: "onboarding", element: <OnboardingPage /> },                
                 {
                     element: <ProtectedLayout />,
                     children: [

@@ -1,182 +1,218 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { Film, Sparkles, Settings, SlidersHorizontal, Sun, Moon, Monitor } from "lucide-react";
+import { Film, Sparkles, Settings, SlidersHorizontal } from "lucide-react";
 import { useMoviesStore } from "@/stores/movie-store";
-import { useTheme } from "@/components/theme-provider";
 
-export function AppSideBar() {
-  const { theme, setTheme } = useTheme();
+interface AppSideBarProps {
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
 
+export function AppSideBar({ mobileOpen = false, onCloseMobile }: AppSideBarProps) {
   const genres = useMoviesStore((s) => s.genres);
-  const selectedGenreIds = useMoviesStore((s) => s.selectedGenreIds);
+  const selectedGenres = useMoviesStore((s) => s.selectedGenres);
+  const toggleGenre = useMoviesStore((s) => s.toggleGenre);
   const isGenresLoading = useMoviesStore((s) => s.isGenresLoading);
   const fetchGenres = useMoviesStore((s) => s.fetchGenres);
-  const toggleGenre = useMoviesStore((s) => s.toggleGenre);
   const resetGenres = useMoviesStore((s) => s.resetGenres);
 
-  const [yearFrom, setYearFrom] = useState("1990");
-  const [yearTo, setYearTo] = useState("2026");
+  // Берём годы и метод их обновления из общего стора
+  const yearFrom = useMoviesStore((s) => s.yearFrom);
+  const yearTo = useMoviesStore((s) => s.yearTo);
+  const setYearRange = useMoviesStore((s) => s.setYearRange);
 
+  const MIN_YEAR = 1950;
+  const MAX_YEAR = 2026;
+
+  const numFrom = Math.max(MIN_YEAR, Math.min(Number(yearFrom) || MIN_YEAR, Number(yearTo) || MAX_YEAR));
+  const numTo = Math.min(MAX_YEAR, Math.max(Number(yearTo) || MAX_YEAR, numFrom));
+
+// Вычисляем отступ слева и ширину оранжевой полосы в процентах
+  const leftPercent = ((numFrom - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100;
+  const widthPercent = ((numTo - numFrom) / (MAX_YEAR - MIN_YEAR)) * 100;
   useEffect(() => {
     fetchGenres();
   }, [fetchGenres]);
 
-  const handleResetAll = () => {
+  const handleReset = () => {
     resetGenres();
-    setYearFrom("1990");
-    setYearTo("2026");
-  };
-
-  const cycleTheme = () => {
-    if (theme === "system") setTheme("dark");
-    else if (theme === "dark") setTheme("light");
-    else setTheme("system");
   };
 
   return (
-    <aside className="flex flex-col w-64 shrink-0 min-h-screen border-r border-border bg-card text-foreground select-none transition-colors">
-      {/* ЛОГОТИП */}
-      <div className="p-5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#FF6B00] text-[#FF6B00] font-black text-sm">
-            ••
-          </div>
-          <span className="text-xl font-black tracking-wider">
-            MOVIE<span className="text-[#FF6B00]">PICK</span>
-          </span>
-        </div>
-      </div>
+    <>
+      {mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden"
+        />
+      )}
 
-      <div className="flex-1 px-3 flex flex-col gap-6 overflow-y-auto">
-        {/* ВЕРХНЯЯ НАВИГАЦИЯ */}
-        <nav className="flex flex-col gap-1.5">
-          <NavLink
-            to="/films"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? "bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`
-            }
-          >
-            <Film className="h-4 w-4" />
-            <span>Фильмы</span>
-          </NavLink>
+      <aside
+        className={`fixed md:sticky top-[72px] left-0 z-30 flex h-[calc(100vh-72px)] w-64 shrink-0 flex-col justify-between border-r border-border bg-card/60 backdrop-blur-md p-5 transition-transform duration-200 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="flex flex-col gap-6 overflow-y-auto pr-1">
+          {/* Верхнее меню: только Фильмы и Рекомендации */}
+          <nav className="flex flex-col gap-1.5 pb-5 border-b border-border">
+            <NavLink
+              to="/films"
+              onClick={onCloseMobile}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                  isActive
+                    ? "bg-[#FF6B00]/15 text-[#FF6B00]"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                }`
+              }
+            >
+              <Film className="h-4 w-4" />
+              <span>Фильмы</span>
+            </NavLink>
 
-          <NavLink
-            to="/recomendations"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? "bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`
-            }
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Рекомендации</span>
-          </NavLink>
-        </nav>
+            <NavLink
+              to="/recomendations"
+              onClick={onCloseMobile}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                  isActive
+                    ? "bg-[#FF6B00]/15 text-[#FF6B00]"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                }`
+              }
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Рекомендации</span>
+            </NavLink>
+          </nav>
 
-        <div className="h-[1px] bg-border mx-2" />
-
-        {/* ФИЛЬТРЫ: ГОД ВЫПУСКА И ЖАНРЫ */}
-        <div className="px-2 flex flex-col gap-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Фильтры</span>
+          {/* Фильтры: только Год и Жанры */}
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-[11px] font-extrabold tracking-wider uppercase text-foreground">
+                <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                Фильтры
+              </span>
+              {(selectedGenres.length > 0 || yearFrom !== "1990" || yearTo !== "2026") && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="text-[11px] font-bold text-[#FF6B00] hover:underline cursor-pointer"
+                >
+                  Сбросить
+                </button>
+              )}
             </div>
-            
-            {(selectedGenreIds.length > 0 || yearFrom !== "1990" || yearTo !== "2026") && (
-              <button
-                type="button"
-                onClick={handleResetAll}
-                className="text-xs font-semibold text-[#FF6B00] hover:underline cursor-pointer bg-transparent border-0"
-              >
-                Сбросить
-              </button>
-            )}
-          </div>
 
-          {/* ГОД ВЫПУСКА */}
-          <div className="flex flex-col gap-2.5">
-            <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-              Год выпуска
-            </span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={yearFrom}
-                onChange={(e) => setYearFrom(e.target.value)}
-                min={1900}
-                max={2030}
-                className="w-full rounded-lg bg-background border border-border px-2.5 py-1.5 text-xs text-center font-medium outline-none focus:border-[#FF6B00]"
-              />
-              <span className="text-muted-foreground text-xs">—</span>
-              <input
-                type="number"
-                value={yearTo}
-                onChange={(e) => setYearTo(e.target.value)}
-                min={1900}
-                max={2030}
-                className="w-full rounded-lg bg-background border border-border px-2.5 py-1.5 text-xs text-center font-medium outline-none focus:border-[#FF6B00]"
-              />
+            {/* Год выпуска с живым двойным ползунком */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
+                Год выпуска
+              </label>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <input
+                  type="number"
+                  value={yearFrom}
+                  min={MIN_YEAR}
+                  max={numTo}
+                  onChange={(e) => setYearRange(e.target.value, yearTo)}
+                  className="h-9 w-full rounded-lg border border-border bg-background text-center text-xs font-semibold text-foreground outline-none focus:border-[#FF6B00]"
+                />
+                <span className="text-xs text-muted-foreground">—</span>
+                <input
+                  type="number"
+                  value={yearTo}
+                  min={numFrom}
+                  max={MAX_YEAR}
+                  onChange={(e) => setYearRange(yearFrom, e.target.value)}
+                  className="h-9 w-full rounded-lg border border-border bg-background text-center text-xs font-semibold text-foreground outline-none focus:border-[#FF6B00]"
+                />
+              </div>
+
+              {/* Интерактивный двойной слайдер */}
+              <div className="relative mt-3 flex h-4 w-full items-center select-none">
+                {/* Серая подложка */}
+                <div className="h-1 w-full rounded-full bg-muted" />
+
+                {/* Динамическая оранжевая полоса */}
+                <div
+                  className="absolute h-1 rounded-full bg-[#FF6B00]"
+                  style={{
+                    left: `${leftPercent}%`,
+                    width: `${widthPercent}%`,
+                  }}
+                />
+
+                {/* Левый ползунок (От) */}
+                <input
+                  type="range"
+                  min={MIN_YEAR}
+                  max={MAX_YEAR}
+                  value={numFrom}
+                  onChange={(e) => {
+                    const val = Math.min(Number(e.target.value), numTo);
+                    setYearRange(String(val), yearTo);
+                  }}
+                  className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FF6B00] [&::-webkit-slider-thumb]:shadow-md"
+                />
+
+                {/* Правый ползунок (До) */}
+                <input
+                  type="range"
+                  min={MIN_YEAR}
+                  max={MAX_YEAR}
+                  value={numTo}
+                  onChange={(e) => {
+                    const val = Math.max(Number(e.target.value), numFrom);
+                    setYearRange(yearFrom, String(val));
+                  }}
+                  className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FF6B00] [&::-webkit-slider-thumb]:shadow-md"
+                />
+              </div>
+            </div>
+
+            {/* Жанры из API */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
+                Жанры
+              </label>
+              {isGenresLoading ? (
+                <span className="text-xs text-muted-foreground animate-pulse">Загрузка...</span>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {genres.map((g) => {
+                    const active = selectedGenres.includes(g.name);
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => toggleGenre(g.name)}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all cursor-pointer ${
+                          active
+                            ? "border-[#FF6B00] bg-[#FF6B00] text-white shadow-sm"
+                            : "border-border bg-background text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {g.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* ЖАНРЫ */}
-          <div className="flex flex-col gap-2.5">
-            <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-              Жанры
-            </span>
-
-            {isGenresLoading ? (
-              <div className="text-xs text-muted-foreground animate-pulse">
-                Загрузка жанров...
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {genres.map((genre) => {
-                  const isSelected = selectedGenreIds.includes(genre.id);
-                  return (
-                    <button
-                      key={genre.id}
-                      type="button"
-                      onClick={() => toggleGenre(genre.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
-                        isSelected
-                          ? "bg-[#FF6B00] text-white border-[#FF6B00] shadow-md shadow-[#FF6B00]/20"
-                          : "bg-background text-muted-foreground border-border hover:text-foreground"
-                      }`}
-                    >
-                      {genre.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
-      </div>
 
-      {/* НИЖНЯЯ ПАНЕЛЬ: ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ И ПРОФИЛЬ */}
-      <div className="p-4 border-t border-border flex flex-col gap-1.5">
+        {/* Ссылка на профиль внизу */}
         <NavLink
           to="/user/me"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
-              isActive
-                ? "text-[#FF6B00] bg-[#FF6B00]/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`
-          }
+          onClick={onCloseMobile}
+          className="mt-4 flex items-center gap-2.5 border-t border-border pt-4 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           <Settings className="h-4 w-4" />
           <span>Настройки профиля</span>
         </NavLink>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

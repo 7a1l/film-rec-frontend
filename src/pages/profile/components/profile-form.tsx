@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, ShieldCheck, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ShieldCheck, ArrowLeft, Eye, EyeOff, Heart, Trash2, Star } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { useMoviesStore } from "@/stores/movie-store";
 import { AuthFormErrorAlert } from "@/pages/auth/components/auth-form-error-alert";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/app-header";
+import { MovieDetailModal } from "@/pages/films/components/movie-detail-modal";
 
 export function ProfileForm() {
   const navigate = useNavigate();
@@ -16,42 +17,49 @@ export function ProfileForm() {
   const updatePassword = useAuthStore((s) => s.updatePassword);
   const logout = useAuthStore((s) => s.logout);
 
+  const likedMovies = useMoviesStore((s) => s.likedMovies) ?? [];
+  const fetchLikedMovies = useMoviesStore((s) => s.fetchLikedMovies);
+  const removeLikedMovie = useMoviesStore((s) => s.removeLikedMovie);
+  const selectedMovie = useMoviesStore((s) => s.selectedMovie);
+  const openMovieDetails = useMoviesStore((s) => s.openMovieDetails);
+  const closeMovieDetails = useMoviesStore((s) => s.closeMovieDetails);
+  const rateMovie = useMoviesStore((s) => s.rateMovie);
+
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const [showEmailPass, setShowEmailPass] = useState(false);
-  const [showOldPass, setShowOldPass] = useState(false);
-  const [showNewPass, setShowNewPass] = useState(false);
-  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [showPass1, setShowPass1] = useState(false);
+  const [showPass2, setShowPass2] = useState(false);
+  const [showPass3, setShowPass3] = useState(false);
 
-  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  useEffect(() => {
+    fetchLikedMovies();
+  }, [fetchLikedMovies]);
+
+  const handleEmailSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setEmailSuccess(null);
     useAuthStore.getState().clearAuthError();
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const email = String(formData.get("email") ?? "").trim();
-
+    const form = e.currentTarget;
+    const email = String(new FormData(form).get("email") ?? "").trim();
     if (!email || email === user?.email) return;
 
     try {
       await updateProfile({ email });
       setEmailSuccess("Письмо с подтверждением отправлено на новый адрес!");
       form.reset();
-    } catch {
-      // Ошибка отобразится через authError
-    }
+    } catch {}
   };
 
-  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setPasswordSuccess(null);
     setLocalError(null);
     useAuthStore.getState().clearAuthError();
 
-    const form = event.currentTarget;
+    const form = e.currentTarget;
     const formData = new FormData(form);
     const old_password = String(formData.get("old_password") ?? "");
     const new_password = String(formData.get("new_password") ?? "");
@@ -66,9 +74,7 @@ export function ProfileForm() {
       await updatePassword({ old_password, new_password });
       setPasswordSuccess("Пароль успешно изменён!");
       form.reset();
-    } catch {
-      // Ошибка отобразится через authError
-    }
+    } catch {}
   };
 
   const handleLogout = () => {
@@ -79,258 +85,305 @@ export function ProfileForm() {
   const initials = (user?.name || user?.email || "U").slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background text-foreground p-6 md:p-10 transition-colors">
-      {/* ВЕРХНЯЯ ПАНЕЛЬ НАВИГАЦИИ */}
-      <div className="w-full max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-[#FF6B00] text-[#FF6B00] font-black text-xs">
-            ••
-          </div>
-          <span className="text-lg font-black tracking-wider">
-            MOVIE<span className="text-[#FF6B00]">PICK</span>
-          </span>
-        </div>
-
+    <div className="min-h-screen w-full bg-background text-foreground transition-colors">
+      {/* Шапка профиля */}
+      <header className="flex h-[72px] items-center justify-between border-b border-border bg-background/85 px-6 md:px-10 backdrop-blur-md">
+        <BrandLogo />
         <Link
           to="/films"
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-4 w-4" />
           <span>Назад к фильмам</span>
         </Link>
-      </div>
+      </header>
 
-      {/* ОСНОВНОЙ КОНТЕЙНЕР ПРОФИЛЯ */}
-      <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
+      <main className="mx-auto w-full max-w-4xl px-6 py-10 flex flex-col gap-6">
         <div>
-          <span className="text-[10px] font-bold tracking-wider text-[#FF6B00] uppercase">
+          <span className="block text-[10px] font-extrabold tracking-widest text-[#FF6B00] uppercase mb-1.5">
             Настройки аккаунта
           </span>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mt-0.5">
-            Ваш профиль
-          </h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Ваш профиль</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Управление личными данными и безопасностью аккаунта
+            Управление личными данными и безопасностью вашего аккаунта.
           </p>
         </div>
 
         <AuthFormErrorAlert message={localError || authError} />
 
-        {/* КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}
-        <div className="flex items-center gap-5 rounded-2xl bg-card border border-border p-6">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#FF6B00] bg-[#FF6B00]/10 text-xl font-bold text-foreground">
+        {/* Широкая карточка пользователя */}
+        <section className="flex items-center gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#FF6B00]/40 bg-[#FF6B00]/10 text-xl font-extrabold text-[#FF6B00]">
             {initials}
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold leading-tight">
-              {user?.name || "Пользователь MOVIEPICK"}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {user?.email}
-            </p>
+          <div>
+            <h2 className="text-lg font-bold">{user?.name || "Пользователь"}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
           </div>
-        </div>
+        </section>
 
-        {/* СЕТКА ИЗ ДВУХ КАРТОЧЕК */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* КАРТОЧКА 1: ИЗМЕНИТЬ EMAIL */}
-          <div className="flex flex-col justify-between rounded-2xl bg-card border border-border p-6 gap-5">
+        {/* Блок лайкнутых фильмов в строку */}
+        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF6B00]/15 text-[#FF6B00]">
+                <Heart className="h-4 w-4 fill-[#FF6B00]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">Понравившиеся фильмы</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Нажмите на постер для подробностей или удалите из списка
+                </p>
+              </div>
+            </div>
+            <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
+              {likedMovies.length}
+            </span>
+          </div>
+
+          {likedMovies.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border py-8 text-center text-xs text-muted-foreground">
+              Вы пока не оценили ни одного фильма. Нажмите «Нравится» на любом фильме в каталоге!
+            </div>
+          ) : (
+            <div className="flex gap-3.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+              {likedMovies.map((movie) => {
+                const rating = movie.rating_kinopoisk ?? movie.rating_imdb;
+                return (
+                  <div
+                    key={movie.id}
+                    onClick={() => openMovieDetails(movie.movie_external_id)}
+                    className="group relative flex w-32 shrink-0 flex-col gap-2 cursor-pointer select-none"
+                  >
+                    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-border bg-background transition-all group-hover:border-[#FF6B00]">
+                      {movie.poster_url ? (
+                        <img
+                          src={movie.poster_url}
+                          alt={movie.title}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                          Нет постера
+                        </div>
+                      )}
+
+                      {typeof rating === "number" && rating > 0 && (
+                        <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          <Star className="h-2.5 w-2.5 fill-[#FF6B00] text-[#FF6B00]" />
+                          <span>{rating.toFixed(1)}</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        title="Убрать из понравившихся"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeLikedMovie(movie);
+                        }}
+                        className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-black/75 text-white/80 hover:bg-destructive hover:text-white transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="px-0.5">
+                      <p className="truncate text-[11px] font-bold text-foreground group-hover:text-[#FF6B00] transition-colors">
+                        {movie.title}
+                      </p>
+                      {movie.year && (
+                        <span className="text-[10px] text-muted-foreground">{movie.year}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Сетка из двух карточек настроек */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Карточка смены Email */}
+          <section className="flex flex-col justify-between rounded-2xl border border-border bg-card p-6 gap-5">
             <div className="flex items-start gap-3.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B00]/15 text-[#FF6B00]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B00]/10 text-[#FF6B00]">
                 <Mail className="h-4 w-4" />
               </div>
               <div>
                 <h3 className="text-sm font-bold">Изменить Email</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Обновите адрес электронной почты, привязанный к аккаунту
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Обновите адрес электронной почты, привязанный к аккаунту.
                 </p>
               </div>
             </div>
 
-            {emailSuccess && (
-              <div className="p-3 text-xs rounded-xl bg-green-500/10 text-green-500 border border-green-500/20">
+           {emailSuccess && (
+              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3 text-xs text-green-500">
                 {emailSuccess}
               </div>
             )}
 
             <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="new-email" className="text-xs font-medium text-muted-foreground">
-                  Новый Email
-                </label>
-                <Input
-                  id="new-email"
+                <label className="text-[11px] font-bold text-muted-foreground">Новый Email</label>
+                <input
                   name="email"
                   type="email"
-                  placeholder="new.email@example.com"
                   required
                   disabled={isAuthLoading}
-                  className="bg-background border-border"
+                  placeholder="new.email@example.com"
+                  className="h-11 rounded-xl border border-border bg-background px-3.5 text-xs text-foreground outline-none focus:border-[#FF6B00]"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="email-confirm-pass" className="text-xs font-medium text-muted-foreground">
-                  Текущий пароль
-                </label>
+                <label className="text-[11px] font-bold text-muted-foreground">Текущий пароль</label>
                 <div className="relative">
-                  <Input
-                    id="email-confirm-pass"
+                  <input
                     name="current_password"
-                    type={showEmailPass ? "text" : "password"}
-                    placeholder="Введите текущий пароль"
+                    type={showPass1 ? "text" : "password"}
                     disabled={isAuthLoading}
-                    className="bg-background border-border pr-9"
+                    placeholder="Введите текущий пароль"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-3.5 pr-10 text-xs text-foreground outline-none focus:border-[#FF6B00]"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowEmailPass(!showEmailPass)}
+                    onClick={() => setShowPass1(!showPass1)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {showEmailPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPass1 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <Button
+              <button
                 type="submit"
                 disabled={isAuthLoading}
-                className="w-fit mt-1 bg-[#FF6B00] hover:bg-[#e05e00] text-white font-bold px-5"
+                className="mt-1 h-11 w-fit rounded-xl bg-[#FF6B00] hover:bg-[#e05e00] px-5 text-xs font-bold text-white shadow-md shadow-[#FF6B00]/20 transition-all cursor-pointer"
               >
                 {isAuthLoading ? "Сохранение..." : "Сохранить изменения"}
-              </Button>
+              </button>
             </form>
-          </div>
+          </section>
 
-          {/* КАРТОЧКА 2: ИЗМЕНИТЬ ПАРОЛЬ */}
-          <div className="flex flex-col justify-between rounded-2xl bg-card border border-border p-6 gap-5">
+          {/* Карточка смены пароля */}
+          <section className="flex flex-col justify-between rounded-2xl border border-border bg-card p-6 gap-5">
             <div className="flex items-start gap-3.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B00]/15 text-[#FF6B00]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B00]/10 text-[#FF6B00]">
                 <Lock className="h-4 w-4" />
               </div>
               <div>
                 <h3 className="text-sm font-bold">Изменить пароль</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Придумайте надёжный, уникальный пароль для защиты
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Придумайте надёжный, уникальный пароль для защиты.
                 </p>
               </div>
             </div>
 
             {passwordSuccess && (
-              <div className="p-3 text-xs rounded-xl bg-green-500/10 text-green-500 border border-green-500/20">
+              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3 text-xs text-green-500">
                 {passwordSuccess}
               </div>
             )}
 
             <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="old-password" className="text-xs font-medium text-muted-foreground">
-                  Текущий пароль
-                </label>
-                <div className="relative">
-                  <Input
-                    id="old-password"
-                    name="old_password"
-                    type={showOldPass ? "text" : "password"}
-                    placeholder="Введите старый пароль"
-                    required
-                    disabled={isAuthLoading}
-                    className="bg-background border-border pr-9"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOldPass(!showOldPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    {showOldPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
+                <label className="text-[11px] font-bold text-muted-foreground">Текущий пароль</label>
+                <input
+                  name="old_password"
+                  type="password"
+                  required
+                  disabled={isAuthLoading}
+                  placeholder="Введите старый пароль"
+                  className="h-11 rounded-xl border border-border bg-background px-3.5 text-xs text-foreground outline-none focus:border-[#FF6B00]"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="new-password" className="text-xs font-medium text-muted-foreground">
-                  Новый пароль
-                </label>
+                <label className="text-[11px] font-bold text-muted-foreground">Новый пароль</label>
                 <div className="relative">
-                  <Input
-                    id="new-password"
+                  <input
                     name="new_password"
-                    type={showNewPass ? "text" : "password"}
-                    placeholder="Минимум 6 символов"
+                    type={showPass2 ? "text" : "password"}
                     required
                     minLength={6}
                     disabled={isAuthLoading}
-                    className="bg-background border-border pr-9"
+                    placeholder="Минимум 6 символов"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-3.5 pr-10 text-xs text-foreground outline-none focus:border-[#FF6B00]"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowNewPass(!showNewPass)}
+                    onClick={() => setShowPass2(!showPass2)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {showNewPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPass2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="confirm-password" className="text-xs font-medium text-muted-foreground">
-                  Повторите новый пароль
-                </label>
+                <label className="text-[11px] font-bold text-muted-foreground">Повторите пароль</label>
                 <div className="relative">
-                  <Input
-                    id="confirm-password"
+                  <input
                     name="confirm_password"
-                    type={showConfirmPass ? "text" : "password"}
-                    placeholder="Повторите новый пароль"
+                    type={showPass3 ? "text" : "password"}
                     required
                     minLength={6}
                     disabled={isAuthLoading}
-                    className="bg-background border-border pr-9"
+                    placeholder="Повторите новый пароль"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-3.5 pr-10 text-xs text-foreground outline-none focus:border-[#FF6B00]"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPass(!showConfirmPass)}
+                    onClick={() => setShowPass3(!showPass3)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {showConfirmPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPass3 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <Button
+              <button
                 type="submit"
                 disabled={isAuthLoading}
-                className="w-fit mt-1 bg-[#FF6B00] hover:bg-[#e05e00] text-white font-bold px-5"
+                className="mt-1 h-11 w-fit rounded-xl bg-[#FF6B00] hover:bg-[#e05e00] px-5 text-xs font-bold text-white shadow-md shadow-[#FF6B00]/20 transition-all cursor-pointer"
               >
                 {isAuthLoading ? "Обновление..." : "Сохранить изменения"}
-              </Button>
+              </button>
             </form>
-          </div>
+          </section>
         </div>
 
-        {/* НИЖНЯЯ ПЛАШКА ЗАЩИТЫ И КНОПКА ВЫХОДА */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl bg-card border border-border px-6 py-4">
+        {/* Нижняя плашка безопасности */}
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[#FF6B00]/20 bg-[#FF6B00]/5 px-6 py-4">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6B00]/15 text-[#FF6B00]">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
+            <ShieldCheck className="h-5 w-5 text-[#FF6B00] shrink-0" />
             <div>
-              <p className="text-xs font-bold">Ваш аккаунт защищён</p>
+              <h3 className="text-xs font-bold">Ваш аккаунт защищён</h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Мы рекомендуем периодически обновлять пароль для защиты вашего профиля
+                Мы используем современные стандарты шифрования для защиты ваших данных и предпочтений.
               </p>
             </div>
           </div>
-
           <button
             type="button"
             onClick={handleLogout}
-            className="text-xs font-semibold text-muted-foreground hover:text-destructive transition-colors cursor-pointer bg-transparent border-0 self-end sm:self-auto"
+            className="text-xs font-bold text-muted-foreground hover:text-destructive transition-colors cursor-pointer self-end sm:self-auto"
           >
             Выйти из аккаунта
           </button>
-        </div>
-      </div>
+        </section>
+      </main>
+
+      {/* Модальное окно деталей фильма */}
+      <MovieDetailModal
+        movie={selectedMovie}
+        onClose={closeMovieDetails}
+        onLike={(m) => rateMovie(m, 1)}
+        onPass={(m) => removeLikedMovie(m)}
+      />
     </div>
   );
 }

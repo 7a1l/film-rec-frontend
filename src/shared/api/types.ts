@@ -70,31 +70,30 @@ export type Genre = {
 
 export type Movie = {
     id: number;
+    movie_external_id: number;
     title: string;
-    year: number;
-    rating: number;
-    poster_url?: string;
+    title_original?: string | null;
+    description?: string | null;
+    poster_url?: string | null;
+    year?: number | null;
+    rating_kinopoisk?: number | null;
+    rating_imdb?: number | null;
+    rating_votes?: number | null;
+    film_length?: number | null;
+    slogan?: string | null;
+    countries?: string | null;
+    film_type?: string | null;
     genres: Genre[];
 };
 
-export type MovieDetails = Movie & {
-    description?: string;
-    duration?: string;
-    director?: string;
-    actors?: string[];
-};
-
-export type PaginatedMoviesResponse = {
-    items: Movie[];
-    total: number;
-    page: number;
-    size: number;
-    pages: number;
+export type InteractionCreateRequest = {
+    movie_id: number; // Внешний ID или ID фильма (см. шаг 2)
+    rating: 1 | -1;
 };
 
 export type MoviesFilterParams = {
+    search?: string;
+    genre?: string[];
     page?: number;
-    size?: number;
-    genre_ids?: number[];
-    sort_by?: string;
+    limit?: number;
 };

@@ -1,41 +1,49 @@
 import { http } from "./http";
-import type { 
-    Genre, 
-    MovieDetails, 
-    MoviesFilterParams, 
-    PaginatedMoviesResponse 
-} from "./types";
+import type { Genre, InteractionCreateRequest, Movie, MoviesFilterParams } from "./types";
 
 export const moviesApi = {
     async getGenres(): Promise<Genre[]> {
-        const { data } = await http.get<Genre[]>('/movies/genres');
+        const { data } = await http.get<Genre[]>('/genres');
         return data;
     },
 
-    async getMovies(params: MoviesFilterParams): Promise<PaginatedMoviesResponse> {
-        const { data } = await http.get<PaginatedMoviesResponse>('/movies', { 
+    async getMovies(params: MoviesFilterParams): Promise<Movie[]> {
+        const { data } = await http.get<Movie[]>('/movies', {
             params: {
+                search: params.search || undefined,
+                genre: params.genre && params.genre.length > 0 ? params.genre : undefined,
                 page: params.page ?? 1,
-                size: params.size ?? 12,
-                sort_by: params.sort_by,
-                genres: params.genre_ids?.length ? params.genre_ids.join(',') : undefined,
+                limit: params.limit ?? 12,
+            },
+            paramsSerializer: {
+                indexes: null // Превращает массив в формат ?genre=A&genre=B для FastAPI
             }
         });
         return data;
     },
 
-    async getMovieById(id: number): Promise<MovieDetails> {
-        const { data } = await http.get<MovieDetails>(`/movies/${id}`);
+    async getMovieById(externalMovieId: number): Promise<Movie> {
+        const { data } = await http.get<Movie>(`/movies/${externalMovieId}`);
         return data;
     },
 
-    async getRecommendations(page = 1, size = 12): Promise<PaginatedMoviesResponse> {
-        const { data } = await http.get<PaginatedMoviesResponse>('/movies/recommendations', {
-            params: { page, size }
-        });
+    async createInteraction(payload: InteractionCreateRequest): Promise<void> {
+        await http.post('/interactions', payload);
+    },
+
+    async getLikedMovies(): Promise<Movie[]> {
+        const { data } = await http.get<Movie[]>('/interactions/likes');
         return data;
     },
-    async rateMovie(movieId: number, action: 'like' | 'pass'): Promise<void> {
-        await http.post(`/movies/${movieId}/${action}`);
+
+    async deleteInteraction(externalMovieId: number): Promise<void> {
+        await http.delete(`/interactions/${externalMovieId}`);
+    },
+
+    async getRecommendations(limit = 12): Promise<Movie[]> {
+        const { data } = await http.get<Movie[]>('/recommendations', {
+            params: { limit }
+        });
+        return data;
     }
 };

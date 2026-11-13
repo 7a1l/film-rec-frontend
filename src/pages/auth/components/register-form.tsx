@@ -43,7 +43,8 @@ export function RegisterForm({}) {
 
         try {
             await register({email, password, name})
-            navigate('/login', {replace: true})
+            localStorage.setItem("is_new_user", "true");
+            navigate("/login", { replace: true });
         } catch {
              
         }

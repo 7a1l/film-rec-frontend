@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/stores/auth-store";
-import { Link, replace, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { AuthFormCard } from "./auth-form-card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { AuthFormErrorAlert } from "./auth-form-error-alert";
@@ -22,8 +22,14 @@ export function LoginForm () {
         const password = String(formData.get('password') ?? '');
 
         try {
-            await login({ email, password})
-            navigate('/films', {replace: true})
+            await login({ email, password });
+            if (localStorage.getItem("is_new_user") === "true") {
+                localStorage.removeItem("is_new_user");
+                navigate("/onboarding", { replace: true });
+            } else {
+                navigate("/films", { replace: true });
+            }
+
         } catch {
 
         }
