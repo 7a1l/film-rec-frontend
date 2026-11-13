@@ -13,6 +13,7 @@ import { ConfirmEmailPage } from "@/pages/auth/confirm-email-change/page";
 import { ProfilePage } from "@/pages/profile/page";
 import { FilmsPage } from "@/pages/films/page";
 import { OnboardingPage } from "@/pages/onboarding/page";
+import { RecommendationsPage } from "@/pages/recommendations/page";
 
 export const appRouter = createBrowserRouter([{
     path: '/',
@@ -48,7 +49,7 @@ export const appRouter = createBrowserRouter([{
                     element: <ProtectedLayout />,
                     children: [
                         { path: "films", element: <FilmsPage /> },
-                        { path: "recomendations", element: <h1/> }
+                        { path: "recomendations", element: <RecommendationsPage/> }
                     ]
                 }
             ]

@@ -8,7 +8,7 @@ type MoviesState = {
     likedMovies: Movie[];
     genres: Genre[];
     selectedMovie: Movie | null;
-
+    isFallbackRecommendations: boolean;
     yearFrom: string;
     yearTo: string;
     selectedGenres: string[];
@@ -47,7 +47,7 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
     likedMovies: [],
     genres: [],
     selectedMovie: null,
-
+    isFallbackRecommendations: false,
     selectedGenres: [],
     searchQuery: '',
     sortBy: 'For you',
@@ -121,22 +121,48 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
     },
 
     fetchRecommendations: async () => {
-        set({ isLoading: true, error: null });
-        try {
-            const list = await moviesApi.getRecommendations(20);
+    set({ isLoading: true, error: null, isFallbackRecommendations: false });
+    try {
+        // 1. Запрашиваем персональные ML-рекомендации из recommendation_cache
+        const mlList = await moviesApi.getRecommendations(20);
+        const safeMlList = Array.isArray(mlList) ? mlList : [];
+
+        if (safeMlList.length > 0) {
             set({
-                movies: Array.isArray(list) ? list : [],
+                movies: safeMlList,
+                isFallbackRecommendations: false,
                 hasMorePages: false,
                 isLoading: false,
             });
-        } catch (error) {
-            set({
-                movies: [],
-                isLoading: false,
-                error: getApiErrorMessage(error, 'Не удалось загрузить рекомендации'),
-            });
+            return;
         }
-    },
+
+        // 2. Холодный старт: если юзера нет в ML-модели, берем популярные фильмы
+        // с учетом жанров, выбранных в онбординге или фильтре
+        const { selectedGenres } = get();
+        const fallbackList = await moviesApi.getMovies({
+            page: 1,
+            limit: 16,
+            genre: selectedGenres.length > 0 ? selectedGenres : undefined,
+        });
+
+        const sortedFallback = (Array.isArray(fallbackList) ? fallbackList : [])
+            .sort((a, b) => (b.rating_kinopoisk ?? 0) - (a.rating_kinopoisk ?? 0));
+
+        set({
+            movies: sortedFallback,
+            isFallbackRecommendations: true,
+            hasMorePages: false,
+            isLoading: false,
+        });
+    } catch (error) {
+        set({
+            movies: [],
+            isLoading: false,
+            error: getApiErrorMessage(error, 'Не удалось загрузить рекомендации'),
+        });
+    }
+},
 
     fetchLikedMovies: async () => {
         try {
