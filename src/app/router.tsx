@@ -9,6 +9,9 @@ import { PasswordrecoveryPage } from "@/pages/auth/recovery/page";
 import { NewPasswordPage } from "@/pages/auth/new-password/page";
 import { RecoveryLinkGuard } from "./routes/recovery-link-guard";
 import { ProtectedLayout } from "./routes/protected-layout";
+import { ConfirmEmailPage } from "@/pages/auth/confirm-email-change/page";
+import { ProfilePage } from "@/pages/profile/page";
+import { FilmsPage } from "@/pages/films/page";
 
 export const appRouter = createBrowserRouter([{
     path: '/',
@@ -19,6 +22,7 @@ export const appRouter = createBrowserRouter([{
             index: true,
             element: <RootRedirect/>
         },
+        { path: "confirm-email", element: <ConfirmEmailPage /> },
         {
             element: <GuestRoute/>,
             children: [
@@ -34,15 +38,16 @@ export const appRouter = createBrowserRouter([{
                   { path: "reset-password", element: <NewPasswordPage /> }
                 ]
         },
-        {
+      {
             element: <ProtectedRoute />,
             children: [
+                { path: "user/me", element: <ProfilePage /> },
+                
                 {
-                    element: <ProtectedLayout />, 
+                    element: <ProtectedLayout />,
                     children: [
-                        { path: "films", element: <h1>Films</h1> },
-                        { path: "recomendations", element: <h1>Recomendations</h1> },
-                        { path: "user/me", element: <h1>ПРОФИЛЬ</h1> }
+                        { path: "films", element: <FilmsPage /> },
+                        { path: "recomendations", element: <h1/> }
                     ]
                 }
             ]

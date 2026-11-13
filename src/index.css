@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,8 +118,7 @@
   }
 }
 
-#root {
-  width: 1126px;
+ #root {
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -127,7 +127,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
+} 
 
 body {
   margin: 0;
@@ -261,3 +261,39 @@ code {
     @apply bg-background text-foreground;}
   html {
     @apply font-sans;}}
+
+
+
+:root {
+  --background: #f4f4f5;
+  --foreground: #121214;
+  --card: #ffffff;
+  --muted: #e4e4e7;
+  --muted-foreground: #71717a;
+  --border: rgba(0, 0, 0, 0.08);
+  --accent: #ff6b00;
+  --accent-hover: #e05e00;
+}
+
+.dark {
+  --background: #121214;
+  --foreground: #ffffff;
+  --card: #1e1e22;
+  --muted: #26262b;
+  --muted-foreground: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #ff6b00;
+  --accent-hover: #ff7b1a;
+}
+
+@layer base {
+  html, body, #root {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Manrope', sans-serif;
+  }
+}

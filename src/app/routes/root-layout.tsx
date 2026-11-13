@@ -1,9 +1,11 @@
-import { Outlet } from "react-router-dom"
+import { Outlet } from "react-router-dom";
+import { ThemeToggleFloating } from "@/components/theme-toggle-floating";
 
-export const RootLayout = () => {
+export function RootLayout() {
   return (
-    <div className="min-h-svh w-full">
-        <Outlet />
+    <div className="min-h-screen w-full bg-background text-foreground">
+      <Outlet />
+      <ThemeToggleFloating />
     </div>
-  )
+  );
 }

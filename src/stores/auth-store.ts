@@ -1,5 +1,5 @@
 import {create} from 'zustand'
-import type { AuthLoginRequest, AuthRegisterRequest, NewPasswordRequest, PasswordRecoveryRequest, UserPublic, ValidateTokenRequest } from '../shared/api/types'
+import type { AuthLoginRequest, AuthRegisterRequest, PasswordRecoveryChangeRequest, PasswordRecoveryRequest, PasswordUpdateRequest, UserPublic, UserUpdateRequest } from '../shared/api/types'
 import { getAuthToken, setAuthToken } from '../shared/api/auth-token'
 import { authApi } from '../shared/api/auth-api'
 import { getApiErrorMessage } from '../lib/utils'
@@ -17,12 +17,14 @@ type AuthState = {
     clearAuthError: () => void
     featchMe: () => Promise<void>
     sendRecoveryEmail: (email: PasswordRecoveryRequest) => Promise<void> 
-    updatePassword: (password: NewPasswordRequest) => Promise<void>
-    validateResetToken: (token: ValidateTokenRequest) => Promise<void>
+    passwordRecoveryChange: (payload: PasswordRecoveryChangeRequest) => Promise<void>
+    updateProfile: (payload: UserUpdateRequest) => Promise<void>
+    confirmEmailChange: (token: string) => Promise<void>
+    updatePassword: (payload: PasswordUpdateRequest) => Promise<void>
 }
 
-function profileToUser(profile: { id: string, email: string }): UserPublic {
-    return { id: profile.id, email: profile.email }
+function profileToUser(profile: { id: string, email: string, name: string }): UserPublic {
+    return { id: profile.id, email: profile.email, name: profile.name }
 }
 
 
@@ -61,41 +63,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }        
     },
     login: async (payload) => {
-        set({isAuthLoading: true, AuthError: null})
+        set({ isAuthLoading: true, AuthError: null });
         try { 
-            const { token, user } = await authApi.login(payload);
-
-            setAuthToken(token);
-            set({
-                user, 
-                isAuthLoading: false 
-            })
-        } catch (error){
+            const response = await authApi.login(payload);
+            setAuthToken(response.JWT_token);
+            await get().featchMe();
+            
+            set({ isAuthLoading: false });
+        } catch (error) {
             set({ 
                 isAuthLoading: false, 
                 AuthError: getApiErrorMessage(error, 'Не удалось войти')
-            })
-            throw error
+            });
+            throw error;
         }
     },
-    register: async (payload) => {
-        set({isAuthLoading: true, AuthError: null})
-         try { 
-            const { token, user } = await authApi.register(payload);
 
-            setAuthToken(token);
-            set({
-                user, 
-                isAuthLoading: false 
-            })
-        } catch (error){
+    register: async (payload) => {
+        set({ isAuthLoading: true, AuthError: null });
+        try { 
+            await authApi.register(payload);
+            set({ isAuthLoading: false });
+        } catch (error) {
             set({ 
                 isAuthLoading: false, 
                 AuthError: getApiErrorMessage(error, 'Не удалось зарегистрироваться')
-            })
-            throw error
+            });
+            throw error;
         }
-
     },
     logout: async () => {
         setAuthToken(null);
@@ -131,30 +126,62 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             throw error
         }
     },
-    updatePassword: async (password) => {
+    passwordRecoveryChange: async (payload) => {
         set({ isAuthLoading: true, AuthError: null })
         try {
-            await authApi.updatePassword(password);
+            await authApi.passwordRecoveryChange(payload)
             set({ isAuthLoading: false })
         } catch (error) {
             set({
                 isAuthLoading: false,
-                AuthError: getApiErrorMessage(error, 'Не удалось обновить пароль')
+                AuthError: getApiErrorMessage(error, 'Не удалось изменить пароль. Возможно, ссылка устарела')
             })
             throw error
         }
     },
-    validateResetToken: async (token) => {
-        set({ isAuthLoading: true, AuthError: null });
+    updateProfile: async (payload) => {
+        set({ isAuthLoading: true, AuthError: null })
         try {
-            await authApi.validateResetToken(token);
-            set({ isAuthLoading: false });
+            const updatedUser = await authApi.updateProfile(payload)
+            set({ 
+                user: profileToUser(updatedUser), 
+                isAuthLoading: false 
+            })
         } catch (error) {
             set({
                 isAuthLoading: false,
-                AuthError: 'Ссылка для восстановления пароля устарела или недействительна'
-            });
-            throw error;
+                AuthError: getApiErrorMessage(error, 'Не удалось обновить профиль')
+            })
+            throw error
+        }
+    },
+
+    confirmEmailChange: async (token) => {
+        set({ isAuthLoading: true, AuthError: null })
+        try {
+            await authApi.confirmEmailChange(token)
+            await get().featchMe()
+            set({ isAuthLoading: false })
+        } catch (error) {
+            set({
+                isAuthLoading: false,
+                AuthError: getApiErrorMessage(error, 'Не удалось подтвердить смену почты. Ссылка недействительна')
+            })
+            throw error
+        }
+    },
+    updatePassword: async (payload) => {
+        set({ isAuthLoading: true, AuthError: null })
+        try {
+            await authApi.updatePassword(payload)
+            set({ isAuthLoading: false })
+        } catch (error) {
+            set({
+                isAuthLoading: false,
+                AuthError: getApiErrorMessage(error, 'Не удалось обновить пароль. Проверьте старый пароль')
+            })
+            throw error
         }
     }
+
 }))

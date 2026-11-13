@@ -11,7 +11,7 @@ export function ResetPasswordForm() {
     const navigate = useNavigate();
     const isAuthLoading = useAuthStore(s => s.isAuthLoading);
     const authError = useAuthStore(s => s.AuthError);
-    const updatePassword = useAuthStore(s => s.updatePassword);
+    const passwordRecoveryChange  = useAuthStore(s => s.passwordRecoveryChange);
     const [searchParams] = useSearchParams();
     const [localError, setLocalError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -26,7 +26,7 @@ export function ResetPasswordForm() {
         const token = searchParams.get("token") || searchParams.get("code") || "";
 
         try {
-            await updatePassword({ password, token }); 
+            await passwordRecoveryChange({ new_password: password, token: token || "" });
             setIsSuccess(true);
         } catch {
         }
